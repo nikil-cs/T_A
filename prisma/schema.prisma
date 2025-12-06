@@ -1,0 +1,140 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Connection string to Neon
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- CORE TABLES ---
+
+model User {
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  password String
+  role     String   // e.g., 'admin', 'student'
+
+  @@map("users")
+}
+
+model Student {
+  studentId       Int                 @id @default(autoincrement()) @map("student_id")
+  firstName       String              @map("first_name")
+  lastName        String              @map("last_name")
+  dateOfBirth     DateTime?           @map("date_of_birth") @db.Date
+  contactNumber   String              @unique @map("contact_number")
+  email           String?             @unique
+  guardianName    String              @map("guardian_name")
+  guardianContact String              @map("guardian_contact")
+  admissionDate   DateTime            @default(now()) @map("admission_date") @db.Date
+  status          String              // ACTIVE, INACTIVE, LEFT
+  password        String?             // Password for student login
+
+  // Relations
+  studentBatches  StudentBatch[]
+  fees            Fee[]
+  attendances     Attendance[]
+  assessments     StudentAssessment[]
+
+  @@map("students")
+}
+
+model Course {
+  courseId       Int     @id @default(autoincrement()) @map("course_id")
+  courseName     String  @unique @map("course_name")
+  standardFee    Decimal @map("standard_fee") @db.Decimal(10, 2)
+  durationMonths Int?    @map("duration_months")
+
+  // Relations
+  batches Batch[]
+
+  @@map("courses")
+}
+
+model Batch {
+  batchId    Int      @id @default(autoincrement()) @map("batch_id")
+  batchName  String   @map("batch_name")
+  courseId   Int      @map("course_id")
+  startTime  DateTime @map("start_time") @db.Time(0)
+  endTime    DateTime @map("end_time") @db.Time(0)
+  daysOfWeek String   @map("days_of_week") // e.g., "Mon, Wed, Fri"
+
+  // Relations
+  course         Course              @relation(fields: [courseId], references: [courseId])
+  studentBatches StudentBatch[]
+  attendances    Attendance[]
+  assessments    StudentAssessment[]
+
+  @@map("batches")
+}
+
+// --- LINKING TABLE ---
+
+model StudentBatch {
+  studentId      Int      @map("student_id")
+  batchId        Int      @map("batch_id")
+  enrollmentDate DateTime @map("enrollment_date") @db.Date
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [studentId])
+  batch   Batch   @relation(fields: [batchId], references: [batchId])
+
+  @@id([studentId, batchId]) // Composite key
+  @@map("student_batches")
+}
+
+// --- TRANSACTIONAL & TRACKING TABLES ---
+
+model Fee {
+  feeId         Int       @id @default(autoincrement()) @map("fee_id")
+  studentId     Int       @map("student_id")
+  batchId       Int       @map("batch_id")
+  dueDate       DateTime  @map("due_date") @db.Date
+  amountDue     Decimal   @map("amount_due") @db.Decimal(10, 2)
+  amountPaid    Decimal   @default(0.00) @map("amount_paid") @db.Decimal(10, 2)
+  isPaid        Boolean   @default(false) @map("is_paid")
+  paymentStatus String    @map("payment_status") // PENDING, OVERDUE, PAID
+  paymentDate   DateTime? @map("payment_date") @db.Date
+  paymentMethod String?   @map("payment_method")
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [studentId])
+
+  @@map("fees")
+}
+
+model Attendance {
+  attendanceId Int      @id @default(autoincrement()) @map("attendance_id")
+  studentId    Int      @map("student_id")
+  batchId      Int      @map("batch_id")
+  classDate    DateTime @map("class_date") @db.Date
+  status       String   // PRESENT, ABSENT, LATE
+  markedBy     Int?     @map("marked_by")
+  markedAt     DateTime @default(now()) @map("marked_at")
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [studentId])
+  batch   Batch   @relation(fields: [batchId], references: [batchId])
+
+  @@unique([studentId, batchId, classDate]) // Student can only be marked once per class
+  @@map("attendance")
+}
+
+model StudentAssessment {
+  assessmentId   Int      @id @default(autoincrement()) @map("assessment_id")
+  studentId      Int      @map("student_id")
+  batchId        Int      @map("batch_id")
+  topicName      String   @map("topic_name")
+  scoreObtained  Decimal  @map("score_obtained") @db.Decimal(5, 2)
+  totalScore     Decimal  @map("total_score") @db.Decimal(5, 2)
+  assessmentDate DateTime @map("assessment_date") @db.Date
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [studentId])
+  batch   Batch   @relation(fields: [batchId], references: [batchId])
+
+  @@map("student_assessments")
+}
