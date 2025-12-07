@@ -1,0 +1,13 @@
+{
+  "adminLogin": {
+    "endpoint": "http://localhost:3000/auth/admin-login",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "username": "Nikil",
+      "password": "your_admin_password"
+    }
+  }
+}
