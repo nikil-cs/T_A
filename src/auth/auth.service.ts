@@ -11,16 +11,17 @@ export class AuthService {
   ) {}
 
   async validateAdmin(username: string, password: string): Promise<any> {
-    const admin = await this.prisma.user.findUnique({ where: { username } });
-    if (!admin || !(await bcrypt.compare(password, admin.password))) {
+    const user = await this.prisma.user.findUnique({ where: { username } });
+    if (!user|| !(await ( user.passwordHash))) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return { id: admin.id, username: admin.username, role: admin.role };
+    return { userId: user.userId, username: user.username, role: user.role };
   }
 
-  async loginAdmin(admin: any) {
-    const payload = { sub: admin.id, username: admin.username, role: admin.role };
+  async loginAdmin(user: any) {
+    const payload = { sub: user.userId, username: user.username, role: user.role };
     return {
+      console : `${user.username} role:  ${user.role} logged in successfully`,
       access_token: this.jwtService.sign(payload),
     };
   }

@@ -1,0 +1,11 @@
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "dateOfBirth": "2005-06-15",
+  "contactNumber": "1234567890",
+  "email": "john.doe@example.com",
+  "guardianName": "Jane Doe",
+  "guardianContact": "9876543210",
+  "username": "john_doe",
+  "password": "securePassword123"
+}
