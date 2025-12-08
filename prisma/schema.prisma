@@ -12,28 +12,33 @@ generator client {
 // --- CORE TABLES ---
 
 model User {
-  id       Int      @id @default(autoincrement())
-  username String   @unique
-  password String
-  role     String   // e.g., 'admin', 'student'
-
+  userId      Int      @id @default(autoincrement()) @map("user_id") // Renamed 'id' to 'userId' and mapped
+  username    String   @unique
+  passwordHash String @map("password_hash") // Renamed 'password' to 'passwordHash' for security
+  role        String   @default("STUDENT") // e.g., 'admin', 'student'
+  
+  // One-to-one relation to Student
+  student     Student? @relation(fields: [studentId], references: [studentId]) // references updated
+  studentId   Int?     @unique
+  
   @@map("users")
 }
 
 model Student {
-  studentId       Int                 @id @default(autoincrement()) @map("student_id")
-  firstName       String              @map("first_name")
-  lastName        String              @map("last_name")
-  dateOfBirth     DateTime?           @map("date_of_birth") @db.Date
-  contactNumber   String              @unique @map("contact_number")
-  email           String?             @unique
-  guardianName    String              @map("guardian_name")
-  guardianContact String              @map("guardian_contact")
-  admissionDate   DateTime            @default(now()) @map("admission_date") @db.Date
-  status          String              // ACTIVE, INACTIVE, LEFT
-  password        String?             // Password for student login
+  studentId        Int        @id @default(autoincrement()) @map("student_id")
+  firstName        String     @map("first_name")
+  lastName         String     @map("last_name")
+  dateOfBirth      DateTime?  @map("date_of_birth") @db.Date
+  contactNumber    String     @unique @map("contact_number")
+  email            String?    @unique
+  guardianName     String     @map("guardian_name")
+  guardianContact  String     @map("guardian_contact")
+  admissionDate    DateTime   @default(now()) @map("admission_date") @db.Date
+  status           String     // ACTIVE, INACTIVE, LEFT
+  // DELETED: password String? - Password moved entirely to the User model
 
   // Relations
+  user            User? // Inverse relation added
   studentBatches  StudentBatch[]
   fees            Fee[]
   attendances     Attendance[]
