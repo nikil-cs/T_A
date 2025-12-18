@@ -13,7 +13,7 @@ export class AuthService {
   async validateAdmin(username: string, password: string): Promise<any> {
     const admin = await this.prisma.user.findUnique({ where: { username } });
     if (!admin || !(await bcrypt.compare(password, admin.password))) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentialss');
     }
     return { id: admin.id, username: admin.username, role: admin.role };
   }
